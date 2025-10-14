@@ -1,22 +1,39 @@
 package cli
 
 import (
+
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/gochin/framework/internal/commands"
+	"github.com/common-nighthawk/go-figure"
+)
+
+// Build-time variables (can be set with -ldflags)
+var (
+	Version   = "1.0.0"           // Default version
+	BuildDate = "unknown"         // Set at build time
+	GitCommit = "unknown"         // Set at build time
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "gochin",
 	Short: "Gochin is a modern Go API framework",
 	Long: `Gochin is a fast and flexible Go-based API framework that provides
-a powerful CLI for rapid application development, including scaffolding,
-server management, and database operations.`,
-	Version: "1.0.0",
+	a powerful CLI for rapid application development, including scaffolding,
+	server management, and database operations.`,
+	Version: Version,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
+	myFigure := figure.NewFigure("GOCHIN", "", true)
+	myFigure.Print()
+	fmt.Println("------------------------------------------------------")
+	fmt.Println("------------------------------------------------------")
+	fmt.Println("")
+	fmt.Println("🚀 Welcome to the GoChin Framework")
+ 
 	return rootCmd.Execute()
 }
 
