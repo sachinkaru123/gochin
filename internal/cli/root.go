@@ -1,0 +1,38 @@
+package cli
+
+import (
+	"github.com/spf13/cobra"
+	"github.com/gochin/framework/internal/commands"
+)
+
+var rootCmd = &cobra.Command{
+	Use:   "gochin",
+	Short: "Gochin is a modern Go API framework",
+	Long: `Gochin is a fast and flexible Go-based API framework that provides
+a powerful CLI for rapid application development, including scaffolding,
+server management, and database operations.`,
+	Version: "1.0.0",
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() error {
+	return rootCmd.Execute()
+}
+
+func init() {
+	// Initialize and register all commands
+	registerCommands()
+}
+
+// registerCommands registers all available commands with the CLI
+func registerCommands() {
+	// Register run command and its subcommands
+	rootCmd.AddCommand(commands.NewRunCommand())
+	
+	// Register make command and its subcommands  
+	rootCmd.AddCommand(commands.NewMakeCommand())
+	
+	// Register db command and its subcommands
+	rootCmd.AddCommand(commands.NewDbCommand())
+}
