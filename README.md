@@ -14,7 +14,7 @@ A modern, fast, and flexible Go-based API framework with a powerful CLI for rapi
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/gochin/framework.git
+git clone https://github.com/sachinkaru123/gochin-v1.git
 cd framework
 ```
 
