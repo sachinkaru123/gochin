@@ -5,6 +5,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+    
+	// Load environment variables from a .env file if present
+	"github.com/joho/godotenv"
 )
 
 // AppConfig holds the main application configuration
@@ -33,6 +36,10 @@ func Load() (*AppConfig, error) {
 	if config != nil {
 		return config, nil
 	}
+
+	// Attempt to load variables from .env in the project root. If the file is
+	// missing, ignore the error and continue using the OS environment.
+	_ = godotenv.Load()
 
 	config = &AppConfig{
 		Server: ServerConfig{

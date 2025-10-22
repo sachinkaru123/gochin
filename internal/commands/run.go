@@ -3,9 +3,9 @@ package commands
 import (
 	"fmt"
 	"strconv"
-
 	"github.com/spf13/cobra"
 	"github.com/gochin/framework/pkg/config"
+	"github.com/gochin/framework/internal/server"
 )
 
 // NewRunCommand creates the run command with its subcommands
@@ -80,8 +80,8 @@ func runStartServer(host, port string) error {
 	}
 	
 	fmt.Println()
-	fmt.Println("Press Ctrl+C to stop the server")
-	fmt.Println("(Actual HTTP server implementation will be added in later phases)")
 	
-	return nil
+	// Create and start the HTTP server
+	srv := server.New(cfg.Server.Host, cfg.Server.Port)
+	return srv.Start()
 }
