@@ -71,33 +71,17 @@ func (s *Server) Start() error {
 
 // handleHome handles the home route
 func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, `
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Gochin Framework</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        .container { max-width: 600px; margin: 0 auto; text-align: center; }
-        .logo { font-size: 48px; color: #2563eb; margin-bottom: 20px; }
-        .subtitle { color: #64748b; margin-bottom: 30px; }
-        .links { margin-top: 30px; }
-        .links a { color: #2563eb; text-decoration: none; margin: 0 10px; }
-        .links a:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo">🚀 Gochin</div>
-        <h1>Welcome to Gochin Framework!</h1>
-        <p class="subtitle">Your Go web framework is running successfully</p>
-        <div class="links">
-            <a href="/health">Health Check</a>
-        </div>
-    </div>
-</body>
-</html>
-`)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	
+	// Get the content of index.html - this checks for modifications
+	htmlContent, err := GetHTMLContent("index.html")
+	if err != nil {
+		http.Error(w, "Template not found", http.StatusInternalServerError)
+		log.Printf("Error loading index.html: %v", err)
+		return
+	}
+	
+	_, _ = w.Write(htmlContent)
 }
 
 // handleHealth handles the health check route

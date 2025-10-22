@@ -12,8 +12,9 @@ import (
 
 // AppConfig holds the main application configuration
 type AppConfig struct {
-	Server ServerConfig `json:"server"`
-	App    AppSettings  `json:"app"`
+	Server   ServerConfig     `json:"server"`
+	App      AppSettings      `json:"app"`
+	Database *DatabaseConfig  `json:"database"`
 }
 
 // ServerConfig holds server-related configuration
@@ -51,6 +52,7 @@ func Load() (*AppConfig, error) {
 			Environment: getEnvString("GOCHIN_ENV", "development"),
 			Debug:       getEnvBool("GOCHIN_DEBUG", true),
 		},
+		Database: LoadDatabaseConfig(),
 	}
 
 	return config, nil
