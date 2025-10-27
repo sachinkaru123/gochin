@@ -5,12 +5,16 @@ import (
 	"os"
 	"strconv"
 	"strings"
+    
+	// Load environment variables from a .env file if present
+	"github.com/joho/godotenv"
 )
 
 // AppConfig holds the main application configuration
 type AppConfig struct {
-	Server ServerConfig `json:"server"`
-	App    AppSettings  `json:"app"`
+	Server   ServerConfig     `json:"server"`
+	App      AppSettings      `json:"app"`
+	Database *DatabaseConfig  `json:"database"`
 }
 
 // ServerConfig holds server-related configuration
@@ -34,6 +38,10 @@ func Load() (*AppConfig, error) {
 		return config, nil
 	}
 
+	// Attempt to load variables from .env in the project root. If the file is
+	// missing, ignore the error and continue using the OS environment.
+	_ = godotenv.Load()
+
 	config = &AppConfig{
 		Server: ServerConfig{
 			Host: getEnvString("GOCHIN_HOST", "localhost"),
@@ -44,6 +52,7 @@ func Load() (*AppConfig, error) {
 			Environment: getEnvString("GOCHIN_ENV", "development"),
 			Debug:       getEnvBool("GOCHIN_DEBUG", true),
 		},
+		Database: LoadDatabaseConfig(),
 	}
 
 	return config, nil
