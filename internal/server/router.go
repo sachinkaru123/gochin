@@ -11,6 +11,7 @@ import (
 
 	"github.com/gochin/framework/bootstrap"
 	"github.com/gochin/framework/pkg/config"
+	"github.com/gochin/framework/pkg/orm"
 	"github.com/gochin/framework/pkg/router"
 	mw "github.com/gochin/framework/pkg/router/middleware"
 )
@@ -22,6 +23,7 @@ func BuildRouter(cfg *config.AppConfig) (*router.Router, error) {
 	if err := bootstrap.ConfigureLogging(cfg); err != nil {
 		return nil, err
 	}
+	orm.ConfigureStmtCache(cfg.Database.StmtCacheSize)
 	bootstrap.RegisterErrorMappers()
 	bootstrap.ConfigureAuth(cfg)
 	bootstrap.ConfigureMail(cfg)

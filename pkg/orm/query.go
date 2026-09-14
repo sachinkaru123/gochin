@@ -3,6 +3,7 @@ package orm
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -147,52 +148,105 @@ func (q *QueryBuilder[T]) buildSelect() (string, []any, error) {
 		return "", nil, q.err
 	}
 
-	cols := q.columns
-	if len(cols) == 0 {
-		cols = q.schema.columns()
-	}
-
+	// Written with a Builder rather than Fprintf/Sprintf: the formatted
+	// variants allocated on every clause and dominated query construction.
 	var b strings.Builder
-	var args []any
+	b.Grow(estimateQuerySize(q))
 
-	fmt.Fprintf(&b, "SELECT %s FROM %s", strings.Join(cols, ", "), q.table)
+	b.WriteString("SELECT ")
+	if len(q.columns) == 0 {
+		b.WriteString(q.schema.SelectList) // precomputed at schema build
+	} else {
+		for i, c := range q.columns {
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString(c)
+		}
+	}
+	b.WriteString(" FROM ")
+	b.WriteString(q.table)
+
+	var args []any
 
 	if len(q.conditions) > 0 {
 		b.WriteString(" WHERE ")
-		clauses := make([]string, len(q.conditions))
 		for i, c := range q.conditions {
+			if i > 0 {
+				b.WriteString(" AND ")
+			}
+
 			if c.op == "IN" {
 				values := c.value.([]any)
-				placeholders := make([]string, len(values))
+				b.WriteString(c.column)
+				b.WriteString(" IN (")
 				for j, v := range values {
+					if j > 0 {
+						b.WriteString(", ")
+					}
 					args = append(args, v)
-					placeholders[j] = fmt.Sprintf("$%d", len(args))
+					b.WriteString(placeholder(len(args)))
 				}
-				clauses[i] = fmt.Sprintf("%s IN (%s)", c.column, strings.Join(placeholders, ", "))
+				b.WriteString(")")
 				continue
 			}
+
 			args = append(args, c.value)
-			clauses[i] = fmt.Sprintf("%s %s $%d", c.column, c.op, len(args))
+			b.WriteString(c.column)
+			b.WriteByte(' ')
+			b.WriteString(c.op)
+			b.WriteByte(' ')
+			b.WriteString(placeholder(len(args)))
 		}
-		b.WriteString(strings.Join(clauses, " AND "))
 	}
 
 	if len(q.order) > 0 {
-		orders := make([]string, len(q.order))
+		b.WriteString(" ORDER BY ")
 		for i, o := range q.order {
-			orders[i] = fmt.Sprintf("%s %s", o.column, o.direction)
+			if i > 0 {
+				b.WriteString(", ")
+			}
+			b.WriteString(o.column)
+			b.WriteByte(' ')
+			b.WriteString(o.direction)
 		}
-		fmt.Fprintf(&b, " ORDER BY %s", strings.Join(orders, ", "))
 	}
 
 	if q.limitVal != nil {
-		fmt.Fprintf(&b, " LIMIT %d", *q.limitVal)
+		b.WriteString(" LIMIT ")
+		b.WriteString(strconv.Itoa(*q.limitVal))
 	}
 	if q.offsetVal != nil {
-		fmt.Fprintf(&b, " OFFSET %d", *q.offsetVal)
+		b.WriteString(" OFFSET ")
+		b.WriteString(strconv.Itoa(*q.offsetVal))
 	}
 
 	return b.String(), args, nil
+}
+
+// placeholders holds pre-rendered "$1".."$64", which covers essentially every
+// real query and keeps strconv off the hot path.
+var placeholders = func() [65]string {
+	var p [65]string
+	for i := 1; i <= 64; i++ {
+		p[i] = "$" + strconv.Itoa(i)
+	}
+	return p
+}()
+
+func placeholder(n int) string {
+	if n >= 1 && n <= 64 {
+		return placeholders[n]
+	}
+	return "$" + strconv.Itoa(n)
+}
+
+// estimateQuerySize pre-sizes the builder so it does not regrow mid-build.
+func estimateQuerySize[T Tabler](q *QueryBuilder[T]) int {
+	size := len(q.schema.SelectList) + len(q.table) + 16
+	size += len(q.conditions) * 24
+	size += len(q.order) * 16
+	return size
 }
 
 // Get executes the query and returns every matching row.

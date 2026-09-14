@@ -20,20 +20,25 @@ type DatabaseConfig struct {
 	MaxOpenConns int    `json:"max_open_conns"`
 	MaxIdleConns int    `json:"max_idle_conns"`
 	MaxLifetime  int    `json:"max_lifetime"` // in minutes
+
+	// StmtCacheSize bounds cached prepared statements. lib/pq re-plans every
+	// query otherwise, which roughly triples query latency. 0 disables.
+	StmtCacheSize int `json:"stmt_cache_size"`
 }
 
 // LoadDatabaseConfig loads database configuration from environment variables
 func LoadDatabaseConfig() *DatabaseConfig {
 	return &DatabaseConfig{
-		Host:         getEnvString("GOCHIN_DB_HOST", "localhost"),
-		Port:         getEnvInt("GOCHIN_DB_PORT", 5432),
-		User:         getEnvString("GOCHIN_DB_USER", "postgres"),
-		Password:     getEnvString("GOCHIN_DB_PASSWORD", ""),
-		Name:         getEnvString("GOCHIN_DB_NAME", "gochin_db"),
-		SSLMode:      getEnvString("GOCHIN_DB_SSL_MODE", "disable"),
-		MaxOpenConns: getEnvInt("GOCHIN_DB_MAX_OPEN_CONNS", 25),
-		MaxIdleConns: getEnvInt("GOCHIN_DB_MAX_IDLE_CONNS", 5),
-		MaxLifetime:  getEnvInt("GOCHIN_DB_MAX_LIFETIME", 5),
+		Host:          getEnvString("GOCHIN_DB_HOST", "localhost"),
+		Port:          getEnvInt("GOCHIN_DB_PORT", 5432),
+		User:          getEnvString("GOCHIN_DB_USER", "postgres"),
+		Password:      getEnvString("GOCHIN_DB_PASSWORD", ""),
+		Name:          getEnvString("GOCHIN_DB_NAME", "gochin_db"),
+		SSLMode:       getEnvString("GOCHIN_DB_SSL_MODE", "disable"),
+		MaxOpenConns:  getEnvInt("GOCHIN_DB_MAX_OPEN_CONNS", 25),
+		MaxIdleConns:  getEnvInt("GOCHIN_DB_MAX_IDLE_CONNS", 5),
+		MaxLifetime:   getEnvInt("GOCHIN_DB_MAX_LIFETIME", 5),
+		StmtCacheSize: getEnvInt("GOCHIN_DB_STMT_CACHE_SIZE", 128),
 	}
 }
 

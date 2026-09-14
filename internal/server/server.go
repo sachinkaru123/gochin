@@ -14,6 +14,7 @@ import (
 
 	"github.com/gochin/framework/pkg/config"
 	"github.com/gochin/framework/pkg/database"
+	"github.com/gochin/framework/pkg/orm"
 )
 
 const shutdownTimeout = 30 * time.Second
@@ -88,6 +89,8 @@ func (s *Server) Start() error {
 	}
 
 	cancelBase()
+	// Release prepared statements before the pool they live on.
+	orm.CloseStmtCache()
 	database.CloseConnection()
 
 	fmt.Println("✅ Server stopped gracefully")

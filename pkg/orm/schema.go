@@ -21,6 +21,12 @@ type typeSchema struct {
 	ByColumn      map[string]fieldInfo
 	PrimaryKey    fieldInfo
 	HasPrimaryKey bool
+
+	// Columns and SelectList are precomputed because they are needed on
+	// every query; rebuilding them per call cost an allocation each.
+	// Columns is shared, so treat it as read-only.
+	Columns    []string
+	SelectList string
 }
 
 var (
@@ -107,6 +113,12 @@ func buildSchema(t reflect.Type) *typeSchema {
 		}
 	}
 
+	s.Columns = make([]string, len(s.Fields))
+	for i, f := range s.Fields {
+		s.Columns[i] = f.Column
+	}
+	s.SelectList = strings.Join(s.Columns, ", ")
+
 	return s
 }
 
@@ -117,13 +129,9 @@ func (s *typeSchema) IsValidColumn(column string) bool {
 }
 
 // columns returns every mapped column name, in struct declaration order.
-func (s *typeSchema) columns() []string {
-	cols := make([]string, len(s.Fields))
-	for i, f := range s.Fields {
-		cols[i] = f.Column
-	}
-	return cols
-}
+//
+// The returned slice is shared and must not be modified.
+func (s *typeSchema) columns() []string { return s.Columns }
 
 // snakeCase converts a Go identifier like "CreatedAt" to "created_at".
 func snakeCase(name string) string {

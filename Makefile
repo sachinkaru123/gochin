@@ -32,6 +32,21 @@ install-manual: build
 	sudo cp $(BINARY_NAME) /usr/local/bin/
 	@echo "✅ Gochin installed globally"
 
+## Run benchmarks
+bench:
+	@echo "Running benchmarks..."
+	go test -run XXX -bench . -benchmem -benchtime=2s ./pkg/...
+
+## Save the current benchmarks as the comparison baseline
+bench-baseline:
+	go test -run XXX -bench . -benchmem -benchtime=2s ./pkg/... > bench-baseline.txt
+	@echo "✅ Baseline written to bench-baseline.txt"
+
+## Compare against the saved baseline (requires benchstat)
+bench-compare:
+	go test -run XXX -bench . -benchmem -benchtime=2s ./pkg/... > bench-new.txt
+	benchstat bench-baseline.txt bench-new.txt
+
 ## Run tests
 test:
 	@echo "Running tests..."
@@ -126,7 +141,7 @@ help:
 	@sed -n 's/^##//p' $(MAKEFILE_LIST) | column -t -s ':' | sed -e 's/^/ /'
 	@echo
 
-.PHONY: build install test fmt lint tidy clean test-cli test-config dev init help
+.PHONY: build install test bench bench-baseline bench-compare fmt lint tidy clean test-cli test-config dev init help
 
 
 ## Framework Commands

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/gochin/framework/pkg/database"
 )
@@ -22,19 +23,54 @@ type Executor interface {
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
 
-// DefaultExecutor returns the framework's shared connection pool, for the
-// occasional raw statement the query builder does not cover.
+var (
+	defaultExecOnce sync.Once
+	defaultExec     *cachingExecutor
+	defaultExecErr  error
+)
+
+// ConfigureStmtCache sets how many prepared statements are cached. Pass 0 to
+// disable caching. Call it before the first query.
+func ConfigureStmtCache(size int) {
+	DefaultStmtCacheSize = size
+}
+
+// DefaultExecutor returns the framework's shared connection pool wrapped in a
+// prepared-statement cache, for the occasional raw statement the query
+// builder does not cover.
 func DefaultExecutor() (Executor, error) {
-	return database.GetConnection()
+	defaultExecOnce.Do(func() {
+		db, err := database.GetConnection()
+		if err != nil {
+			defaultExecErr = err
+			return
+		}
+		defaultExec = &cachingExecutor{db: db, cache: newStmtCache(DefaultStmtCacheSize)}
+	})
+	if defaultExecErr != nil {
+		return nil, defaultExecErr
+	}
+	return defaultExec, nil
+}
+
+// CloseStmtCache releases every cached prepared statement. Call it during
+// shutdown, before closing the connection pool.
+func CloseStmtCache() {
+	if defaultExec != nil {
+		defaultExec.cache.Close()
+	}
 }
 
 // resolveExecutor picks the caller-supplied Executor if one was given,
 // otherwise falls back to the framework's default database connection.
+//
+// A caller-supplied executor (typically a *sql.Tx) is used as-is: statements
+// prepared on the pool do not belong to another connection's transaction.
 func resolveExecutor(execs []Executor) (Executor, error) {
 	if len(execs) > 0 && execs[0] != nil {
 		return execs[0], nil
 	}
-	return database.GetConnection()
+	return DefaultExecutor()
 }
 
 // WithTransaction runs fn inside a database transaction against the default
