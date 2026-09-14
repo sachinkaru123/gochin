@@ -47,8 +47,6 @@ Thumbs.db
 
 # Log files
 *.log
-logs/
-log/
 
 # Database files
 *.db
