@@ -50,7 +50,7 @@ func init() {
 
 ## 1. Install
 
-**Requirements:** Go 1.25+ and PostgreSQL.
+**Requirements:** Go 1.25+, PostgreSQL, and `git` (Go's module downloader shells out to it when fetching dependencies, even though you never run git commands yourself).
 
 Gochin is a library plus a scaffolding CLI — you install the CLI once, then generate a new project for each app you build, the same way you'd use `rails new`, `cargo new` or `laravel new`:
 
@@ -58,7 +58,13 @@ Gochin is a library plus a scaffolding CLI — you install the CLI once, then ge
 go install github.com/sachinkaru123/gochin/cmd/gochin@latest
 ```
 
-This puts a `gochin` binary on your `$PATH` (Go installs it under `$(go env GOPATH)/bin`). You do **not** clone this repository to build an app — it's the framework's own source, not a project template you edit in place.
+This puts a `gochin` binary under `$(go env GOPATH)/bin`. That directory isn't always on `$PATH` by default (especially on a fresh machine) — if `gochin: command not found` after installing, add it yourself:
+
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"   # add this line to your ~/.bashrc or ~/.zshrc too
+```
+
+You do **not** clone this repository to build an app — it's the framework's own source, not a project template you edit in place.
 
 ---
 

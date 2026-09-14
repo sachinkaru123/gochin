@@ -75,9 +75,15 @@ func runNew(name, module string) error {
 		fmt.Printf("Using local framework checkout: %s\n", absReplace)
 	}
 
-	fmt.Println("Fetching dependencies (go mod tidy)...")
-	if err := runIn(dir, "go", "mod", "tidy"); err != nil {
-		return fmt.Errorf("go mod tidy failed: %w\n(the project was created; you may need to run this yourself)", err)
+	if _, err := exec.LookPath("git"); err != nil {
+		fmt.Println("⚠️  git is not installed — skipping `go mod tidy`.")
+		fmt.Println("   Go's module downloader needs git to fetch dependencies. Install it, then run:")
+		fmt.Printf("     cd %s && go mod tidy\n", name)
+	} else {
+		fmt.Println("Fetching dependencies (go mod tidy)...")
+		if err := runIn(dir, "go", "mod", "tidy"); err != nil {
+			return fmt.Errorf("go mod tidy failed: %w\n(the project was created; you may need to run this yourself)", err)
+		}
 	}
 
 	fmt.Printf(`
