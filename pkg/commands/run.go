@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
-	"github.com/gochin/framework/internal/server"
-	"github.com/gochin/framework/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/server"
 	"github.com/spf13/cobra"
 	"strconv"
 )

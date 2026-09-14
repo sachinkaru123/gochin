@@ -1,8 +1,8 @@
 package bootstrap
 
 import (
-	"github.com/gochin/framework/pkg/auth"
-	"github.com/gochin/framework/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/auth"
+	"github.com/sachinkaru123/gochin/pkg/config"
 )
 
 // ConfigureAuth applies the configured argon2id parameters.

@@ -3,9 +3,9 @@ package bootstrap
 import (
 	"strings"
 
-	"github.com/gochin/framework/pkg/config"
-	"github.com/gochin/framework/pkg/logs"
-	"github.com/gochin/framework/pkg/mail"
+	"github.com/sachinkaru123/gochin/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/logs"
+	"github.com/sachinkaru123/gochin/pkg/mail"
 )
 
 // ConfigureMail installs the configured mailer.

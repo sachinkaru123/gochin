@@ -7,6 +7,44 @@ import (
 	"strings"
 )
 
+// moduleName returns the module path declared in the nearest go.mod, walking
+// up from the current directory the way `go` itself resolves a module root.
+//
+// Generated code must import the CALLING project's own packages
+// ("myapp/app/Services"), never the framework's — this is what makes that
+// possible without hardcoding a path into the generator.
+func moduleName() (string, error) {
+	start, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	dir := start
+	for {
+		data, err := os.ReadFile(filepath.Join(dir, "go.mod"))
+		if err == nil {
+			for _, line := range strings.Split(string(data), "\n") {
+				line = strings.TrimSpace(line)
+				if rest, ok := strings.CutPrefix(line, "module "); ok {
+					return strings.TrimSpace(rest), nil
+				}
+			}
+			return "", fmt.Errorf("%s has no module directive", filepath.Join(dir, "go.mod"))
+		}
+		if !os.IsNotExist(err) {
+			return "", err
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf(
+				"no go.mod found in %s or any parent directory — run this inside a Gochin project (see `gochin new`)",
+				start)
+		}
+		dir = parent
+	}
+}
+
 // writeGenerated creates dir if needed and writes content to filename inside
 // it, refusing to clobber an existing file unless force is set.
 func writeGenerated(dir, filename, content string, force bool) (string, error) {

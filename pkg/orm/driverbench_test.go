@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gochin/framework/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/database"
 )
 
 // These isolate driver protocol overhead from query execution.

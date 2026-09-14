@@ -1,0 +1,36 @@
+package models
+
+import (
+	"database/sql"
+	"time"
+
+	"github.com/sachinkaru123/gochin/pkg/orm"
+)
+
+// AuthToken is an issued API token.
+//
+// TokenDigest holds only the SHA-256 of the token; the token itself is shown
+// to the client once at creation and never stored.
+type AuthToken struct {
+	orm.Model
+
+	UserID      int64        `db:"user_id" json:"user_id"`
+	Name        string       `db:"name" json:"name"`
+	TokenDigest string       `db:"token_digest" json:"-"`
+	Abilities   string       `db:"abilities" json:"abilities"`
+	ExpiresAt   sql.NullTime `db:"expires_at" json:"expires_at"`
+	RevokedAt   sql.NullTime `db:"revoked_at" json:"-"`
+	LastUsedAt  sql.NullTime `db:"last_used_at" json:"last_used_at"`
+}
+
+func (AuthToken) TableName() string { return "auth_tokens" }
+
+var _ orm.Tabler = AuthToken{}
+
+// IsUsable reports whether the token may still authenticate.
+func (t AuthToken) IsUsable(now time.Time) bool {
+	if t.RevokedAt.Valid {
+		return false
+	}
+	return !t.ExpiresAt.Valid || now.Before(t.ExpiresAt.Time)
+}

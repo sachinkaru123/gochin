@@ -1,0 +1,38 @@
+# {{.Name}}
+
+A [Gochin](https://github.com/sachinkaru123/gochin) application.
+
+## Setup
+
+```bash
+cp .env.example .env      # then edit your database credentials
+createdb {{.Name}}_db
+
+go run . db migrate       # create the tables
+go run . db seed          # add development data
+go run . run start        # http://localhost:8080
+```
+
+## Try it
+
+```bash
+curl localhost:8080/health
+
+curl -X POST localhost:8080/api/v1/auth/login \
+  -d '{"email":"ada@gochin.test","password":"password123456"}'
+```
+
+## Add something new
+
+```bash
+go run . make controller Post --resource
+go run . make service Post
+go run . make model Post
+go run . make migration create_posts_table --table=posts
+
+go run . route list
+```
+
+See the [Gochin README](https://github.com/sachinkaru123/gochin) for the full
+guide: routing, the ORM and relationships, authentication, middleware,
+logging, file uploads and mail.

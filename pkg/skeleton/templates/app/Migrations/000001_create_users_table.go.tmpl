@@ -1,0 +1,36 @@
+package migrations
+
+import (
+	"database/sql"
+
+	"github.com/sachinkaru123/gochin/pkg/orm"
+)
+
+func init() {
+	orm.Register(orm.Migration{
+		Version: "000001",
+		Name:    "create_users_table",
+		Up: func(tx *sql.Tx) error {
+			if err := orm.CreateTable(tx, "users", func(t *orm.Blueprint) {
+				t.ID()
+				t.String("name")
+				t.String("email").Unique()
+				t.String("password_hash")
+				t.Timestamps()
+			}); err != nil {
+				return err
+			}
+
+			// A case-sensitive unique constraint alone still allows
+			// "Ada@x.com" and "ada@x.com" as two accounts — a registration
+			// confusion and account-takeover vector once passwords are
+			// involved. This index closes that.
+			_, err := tx.Exec(
+				`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_lower ON users (lower(email))`)
+			return err
+		},
+		Down: func(tx *sql.Tx) error {
+			return orm.DropTable(tx, "users")
+		},
+	})
+}

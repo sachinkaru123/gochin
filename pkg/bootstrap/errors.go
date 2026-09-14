@@ -14,8 +14,8 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/gochin/framework/pkg/orm"
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/orm"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 var registerOnce sync.Once

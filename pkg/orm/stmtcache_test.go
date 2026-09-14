@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/gochin/framework/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/database"
 )
 
 func cachedExecutor(t *testing.T, size int) (*cachingExecutor, *sql.DB) {

@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/gochin/framework/internal/server"
-	"github.com/gochin/framework/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/server"
 )
 
 // NewRouteCommand creates the route command with its subcommands.

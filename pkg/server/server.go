@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gochin/framework/pkg/config"
-	"github.com/gochin/framework/pkg/database"
-	"github.com/gochin/framework/pkg/orm"
+	"github.com/sachinkaru123/gochin/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/orm"
 )
 
 const shutdownTimeout = 30 * time.Second

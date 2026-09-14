@@ -54,8 +54,8 @@ const controllerHeader = `package controllers
 import (
 	"net/http"
 
-	services "github.com/gochin/framework/app/Services"
-	"github.com/gochin/framework/pkg/router"
+	services "%[4]s/app/Services"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 // %[1]sController handles HTTP requests for %[2]s.
@@ -130,11 +130,16 @@ func (c *%[1]sController) Destroy(ctx *router.Context) error {
 `
 
 func generateController(name string, resource, force bool) error {
+	module, err := moduleName()
+	if err != nil {
+		return err
+	}
+
 	name = pascalCase(strings.TrimSuffix(pascalCase(name), "Controller"))
 	plural := pluralize(strings.ToLower(name))
 	receiver := camelCase(pluralize(name))
 
-	content := fmt.Sprintf(controllerHeader, name, plural, receiver)
+	content := fmt.Sprintf(controllerHeader, name, plural, receiver, module)
 	content += fmt.Sprintf(controllerIndexAction, name, plural, receiver)
 	if resource {
 		content += fmt.Sprintf(controllerResourceActions, name, plural, receiver, strings.ToLower(name))
@@ -177,8 +182,8 @@ const serviceTemplate = `package services
 import (
 	"context"
 
-	models "github.com/gochin/framework/app/Models"
-	"github.com/gochin/framework/pkg/orm"
+	models "%[4]s/app/Models"
+	"github.com/sachinkaru123/gochin/pkg/orm"
 )
 
 // %[1]sService holds the business rules for %[2]s.
@@ -223,10 +228,15 @@ func (s *%[1]sService) Delete(ctx context.Context, id int64) error {
 `
 
 func generateService(name string, force bool) error {
+	module, err := moduleName()
+	if err != nil {
+		return err
+	}
+
 	name = pascalCase(strings.TrimSuffix(pascalCase(name), "Service"))
 	plural := pluralize(strings.ToLower(name))
 
-	content := fmt.Sprintf(serviceTemplate, name, plural, strings.ToLower(name))
+	content := fmt.Sprintf(serviceTemplate, name, plural, strings.ToLower(name), module)
 
 	path, err := writeGenerated(filepath.Join("app", "Services"), name+"Service.go", content, force)
 	if err != nil {
@@ -260,7 +270,7 @@ func newMakeMiddlewareCommand() *cobra.Command {
 const middlewareTemplate = `package middleware
 
 import (
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 // %[1]s returns a middleware that runs around matching routes.
@@ -324,7 +334,7 @@ const migrationTemplate = `package migrations
 import (
 	"database/sql"
 
-	"github.com/gochin/framework/pkg/orm"
+	"github.com/sachinkaru123/gochin/pkg/orm"
 )
 
 func init() {
@@ -454,7 +464,7 @@ func newMakeModelCommand() *cobra.Command {
 const modelTemplate = `package models
 
 import (
-	"github.com/gochin/framework/pkg/orm"
+	"github.com/sachinkaru123/gochin/pkg/orm"
 )
 
 // %[1]s represents a row in the "%[2]s" table.
@@ -518,9 +528,9 @@ import (
 	"context"
 	"errors"
 
-	models "github.com/gochin/framework/app/Models"
-	"github.com/gochin/framework/pkg/logs"
-	"github.com/gochin/framework/pkg/orm"
+	models "%[3]s/app/Models"
+	"github.com/sachinkaru123/gochin/pkg/logs"
+	"github.com/sachinkaru123/gochin/pkg/orm"
 )
 
 func init() {
@@ -566,10 +576,15 @@ func seed%[1]s(ctx context.Context) error {
 `
 
 func generateSeeder(name string, force bool) error {
+	module, err := moduleName()
+	if err != nil {
+		return err
+	}
+
 	name = pascalCase(strings.TrimSuffix(pascalCase(name), "Seeder"))
 	table := pluralize(snakeCase(name))
 
-	content := fmt.Sprintf(seederTemplate, name, table)
+	content := fmt.Sprintf(seederTemplate, name, table, module)
 
 	path, err := writeGenerated(filepath.Join("app", "Seeders"), name+"Seeder.go", content, force)
 	if err != nil {

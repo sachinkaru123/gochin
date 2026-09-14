@@ -6,10 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	// Blank import: each file in app/Seeders registers itself from init().
-	_ "github.com/gochin/framework/app/Seeders"
-	"github.com/gochin/framework/pkg/database"
-	"github.com/gochin/framework/pkg/orm"
+	"github.com/sachinkaru123/gochin/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/orm"
 )
 
 func newDbSeedCommand() *cobra.Command {

@@ -3,8 +3,8 @@ package bootstrap
 import (
 	"fmt"
 
-	"github.com/gochin/framework/pkg/config"
-	"github.com/gochin/framework/pkg/logs"
+	"github.com/sachinkaru123/gochin/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/logs"
 )
 
 // ConfigureLogging installs the application logger.

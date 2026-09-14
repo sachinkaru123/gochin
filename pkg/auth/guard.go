@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 // Principal is the transport-independent record behind a presented token.
@@ -106,7 +106,7 @@ func NewGuard[U any](cfg GuardConfig[U]) (*Guard[U], error) {
 		cfg: cfg,
 		// Package-qualified and per-guard, so neither another package's
 		// c.Set nor a second guard can collide with this slot.
-		key: "github.com/gochin/framework/pkg/auth#" + strconv.FormatUint(guardSeq.Add(1), 10),
+		key: "github.com/sachinkaru123/gochin/pkg/auth#" + strconv.FormatUint(guardSeq.Add(1), 10),
 		now: now,
 		log: log,
 	}, nil

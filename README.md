@@ -1,6 +1,6 @@
 # Gochin
 
-A batteries-included API framework for Go. route files, controllers, services, migrations, seeders — implemented the way Go actually wants them: compile-time checked, reflection-free at dispatch, and with almost no dependencies.
+A batteries-included API framework for Go, with Laravel-shaped ergonomics — route files, controllers, services, migrations, seeders — implemented the way Go actually wants them: compile-time checked, reflection-free at dispatch, and with almost no dependencies.
 
 ```go
 // app/Routes/api.go
@@ -50,33 +50,33 @@ func init() {
 
 ## 1. Install
 
-**Requirements:** Go 1.25+ 
+**Requirements:** Go 1.25+ and PostgreSQL.
+
+Gochin is a library plus a scaffolding CLI — you install the CLI once, then generate a new project for each app you build, the same way you'd use `rails new`, `cargo new` or `laravel new`:
 
 ```bash
-git clone https://github.com/sachinkaru123/GOCHIN.git
-cd GOCHIN
-go mod download
-make install          # builds and installs the `gochin` binary
+go install github.com/sachinkaru123/gochin/cmd/gochin@latest
 ```
 
-`make install` detects your OS and installs to `/usr/local/bin` (Linux/macOS) or `%PROGRAMFILES%` (Windows). To build locally instead:
-
-```bash
-go build -o gochin ./cmd/gochin
-```
+This puts a `gochin` binary on your `$PATH` (Go installs it under `$(go env GOPATH)/bin`). You do **not** clone this repository to build an app — it's the framework's own source, not a project template you edit in place.
 
 ---
 
 ## 2. Quick start
 
 ```bash
-cp .env-example .env          # then edit your database credentials
-createdb chingo_db
+gochin new myapp
+cd myapp
 
-gochin db migrate             # create the tables
-gochin db seed                # add development data
-gochin run start              # http://localhost:8080
+cp .env.example .env          # then edit your database credentials
+createdb myapp_db
+
+go run . db migrate           # create the tables
+go run . db seed              # add development data
+go run . run start            # http://localhost:8080
 ```
+
+`gochin new` generates a small working app, not an empty shell: a `users` + `auth_tokens` schema, a `User` model, and full register/login/me/logout endpoints, all wired and ready to run.
 
 Verify it works:
 
@@ -86,18 +86,24 @@ curl -X POST localhost:8080/api/v1/auth/login \
   -d '{"email":"ada@gochin.test","password":"password123456"}'
 ```
 
+From here on, run the CLI as `go run . <command>` from inside your project — it compiles your app's own routes, migrations and seeders into the command, which a globally-installed binary can't do for code it hasn't seen. (`gochin run start`, `gochin db migrate`, etc. also work directly: the installed CLI detects it's inside a Gochin project and delegates to `go run .` for you.)
+
 Useful flags:
 
 ```bash
-gochin run start --port 3000 --host 0.0.0.0
-gochin run start --skip-db-test          # start without checking the database
+go run . run start --port 3000 --host 0.0.0.0
+go run . run start --skip-db-test          # start without checking the database
 ```
 
 ---
 
 ## 3. Project structure
 
+A generated project looks like this:
+
 ```
+main.go          blank-imports your app/Migrations, app/Routes, app/Seeders
+go.mod           requires github.com/sachinkaru123/gochin
 app/
   Controllers/   HTTP entry points — thin
   Services/      business logic and data access
@@ -107,16 +113,15 @@ app/
   Routes/        route definitions (multiple files, auto-registered)
   Migrations/    versioned schema changes
   Seeders/       development data
-bootstrap/       wiring: logging, auth, mail, error mapping
-pkg/             the framework itself (router, orm, auth, logs, mail, storage)
-internal/        CLI and server lifecycle
 public/          web-accessible assets
 storage/
   app/           uploaded files (never served)
   logs/          log files
 ```
 
-**The one rule:** nothing in `pkg/` may import anything from `app/`. That is what keeps the framework reusable and free of import cycles.
+Everything under `app/` follows the registry pattern: a file registers itself from `init()`, and `main.go`'s blank imports are what trigger those `init()`s — add a new file and nothing else needs to change.
+
+The framework itself (this repository) is just `pkg/`: the router, ORM, auth, logging, mail and storage packages your generated project imports. **The one rule that keeps it reusable: nothing in `pkg/` may import anything from an application's `app/`.**
 
 ---
 
@@ -188,6 +193,8 @@ Everything is read from environment variables, with a `.env` file loaded automat
 ## 5. CLI reference
 
 ```bash
+gochin new <name> [--module=path]   # scaffold a new project
+
 gochin run start [--host] [--port] [--skip-db-test]
 
 gochin make controller <Name> [--resource] [--force]
@@ -213,6 +220,8 @@ POST    /api/v1/auth/login    AuthController.Login     RequestID, Logger, ..., R
 
 It runs without a database, so it works in CI.
 
+`gochin new`, `gochin make ...` work anywhere. `run`, `db` and `route` need your app's own compiled-in routes/migrations/seeders: run them as `go run . <command>` from your project root, or just use the installed `gochin` binary directly — it detects a Gochin project (a `go.mod` requiring the framework, next to a `main.go`) and transparently delegates to `go run .` for you.
+
 ---
 
 ## 6. Routing
@@ -226,10 +235,10 @@ Every file in `app/Routes` registers itself from `init()`. Add as many files as 
 package routes
 
 import (
-    controllers "github.com/gochin/framework/app/Controllers"
-    middleware "github.com/gochin/framework/app/Middleware"
-    services "github.com/gochin/framework/app/Services"
-    "github.com/gochin/framework/pkg/router"
+    controllers "myapp/app/Controllers"
+    middleware "myapp/app/Middleware"
+    services "myapp/app/Services"
+    "github.com/sachinkaru123/gochin/pkg/router"
 )
 
 func init() {
@@ -893,7 +902,7 @@ gochin make middleware Timing
 ## 17. Logging
 
 ```go
-import "github.com/gochin/framework/pkg/logs"
+import "github.com/sachinkaru123/gochin/pkg/logs"
 
 logs.Debug("checkout started", "order_id", id)
 logs.Info("user registered", "email", email)
@@ -1118,10 +1127,10 @@ r.ServeHTTP(rec, req)
 
 Worth knowing before you extend the framework.
 
-**Dependency direction.** `app/Routes → app/Controllers → app/Services → pkg/orm`. Nothing in `pkg/` imports from `app/`; `bootstrap/` is the only place allowed to know about both, which is where ORM and driver errors get mapped to HTTP statuses. Enforce it in CI:
+**Dependency direction.** `app/Routes → app/Controllers → app/Services → pkg/orm`. Nothing in `pkg/` imports from an application's `app/` — ORM and Postgres driver errors are mapped to HTTP statuses inside the framework's own `pkg/bootstrap`, wired in automatically when your app starts, so your `app/` code never has to know about it. This is enforced in this repository's own CI:
 
 ```bash
-go list -deps ./pkg/... | grep gochin/framework/app && exit 1
+go list -deps ./pkg/... | grep sachinkaru123/gochin/app && exit 1
 ```
 
 **Registries over configuration.** Routes, migrations and seeders all register themselves from `init()` and are picked up by a single blank import. Adding a file never means editing a central list.

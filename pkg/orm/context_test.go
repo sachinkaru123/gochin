@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gochin/framework/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/database"
 )
 
 // requireDB skips when no database is reachable, so the suite still runs on

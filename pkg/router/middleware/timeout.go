@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 // Timeout bounds how long a handler may run.

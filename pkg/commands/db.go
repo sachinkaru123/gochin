@@ -3,9 +3,8 @@ package commands
 import (
 	"fmt"
 
-	_ "github.com/gochin/framework/app/Migrations"
-	"github.com/gochin/framework/pkg/database"
-	"github.com/gochin/framework/pkg/orm"
+	"github.com/sachinkaru123/gochin/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/orm"
 	"github.com/spf13/cobra"
 )
 

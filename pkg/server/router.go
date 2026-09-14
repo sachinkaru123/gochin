@@ -6,18 +6,17 @@ import (
 	"strings"
 	"time"
 
-	// Blank import: each file in app/Routes registers its routes from init().
-	_ "github.com/gochin/framework/app/Routes"
-
-	"github.com/gochin/framework/bootstrap"
-	"github.com/gochin/framework/pkg/config"
-	"github.com/gochin/framework/pkg/orm"
-	"github.com/gochin/framework/pkg/router"
-	mw "github.com/gochin/framework/pkg/router/middleware"
+	"github.com/sachinkaru123/gochin/pkg/bootstrap"
+	"github.com/sachinkaru123/gochin/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/orm"
+	"github.com/sachinkaru123/gochin/pkg/router"
+	mw "github.com/sachinkaru123/gochin/pkg/router/middleware"
 )
 
 // BuildRouter assembles the application router: global middleware, framework
-// routes, then every route file registered from app/Routes.
+// routes, then every route registered via router.Register — typically by an
+// app's own app/Routes package, blank-imported from its main.go so that
+// package's init() functions run before this is called.
 func BuildRouter(cfg *config.AppConfig) (*router.Router, error) {
 	// Logging first: everything below logs through slog, which this installs.
 	if err := bootstrap.ConfigureLogging(cfg); err != nil {

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 // RateLimitConfig configures the token-bucket limiter.

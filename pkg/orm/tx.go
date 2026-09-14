@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/gochin/framework/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/database"
 )
 
 // Executor is satisfied by both *sql.DB and *sql.Tx, letting every CRUD

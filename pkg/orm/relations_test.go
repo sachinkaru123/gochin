@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/gochin/framework/pkg/database"
+	"github.com/sachinkaru123/gochin/pkg/database"
 )
 
 type relParent struct {

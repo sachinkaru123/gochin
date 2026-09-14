@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 type testUser struct {
