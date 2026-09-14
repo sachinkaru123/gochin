@@ -120,3 +120,6 @@ tmp/
 run.sh
 start.sh
 deploy.sh
+# Runtime storage
+storage/logs/
+storage/app/

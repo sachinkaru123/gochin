@@ -1,18 +1,23 @@
 package cli
 
 import (
-
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/gochin/framework/internal/commands"
+	"os"
+
 	"github.com/common-nighthawk/go-figure"
+	"github.com/spf13/cobra"
+
+	"github.com/gochin/framework/bootstrap"
+	"github.com/gochin/framework/internal/commands"
+	"github.com/gochin/framework/pkg/config"
+	"github.com/gochin/framework/pkg/logs"
 )
 
 // Build-time variables (can be set with -ldflags)
 var (
-	Version   = "1.0.0"           // Default version
-	BuildDate = "unknown"         // Set at build time
-	GitCommit = "unknown"         // Set at build time
+	Version   = "1.0.0"   // Default version
+	BuildDate = "unknown" // Set at build time
+	GitCommit = "unknown" // Set at build time
 )
 
 var rootCmd = &cobra.Command{
@@ -33,7 +38,17 @@ func Execute() error {
 	fmt.Println("------------------------------------------------------")
 	fmt.Println("")
 	fmt.Println("🚀 Welcome to the GoChin Framework")
- 
+
+	// CLI commands log to the same files as the server, so a seeder or
+	// migration run leaves a record. A logging failure must not stop the
+	// command itself.
+	if cfg, err := config.Load(); err == nil {
+		if err := bootstrap.ConfigureLogging(cfg); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: %v\n", err)
+		}
+		defer logs.Close()
+	}
+
 	return rootCmd.Execute()
 }
 
@@ -46,10 +61,11 @@ func init() {
 func registerCommands() {
 	// Register run command and its subcommands
 	rootCmd.AddCommand(commands.NewRunCommand())
-	
-	// Register make command and its subcommands  
+
+	// Register make command and its subcommands
 	rootCmd.AddCommand(commands.NewMakeCommand())
-	
+
 	// Register db command and its subcommands
 	rootCmd.AddCommand(commands.NewDbCommand())
+	rootCmd.AddCommand(commands.NewRouteCommand())
 }

@@ -1,15 +1,22 @@
 package server
 
 import (
-	"fmt"
-	"net/http"
 	"context"
+	"fmt"
+	"log"
+	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"log"
+
+	"github.com/gochin/framework/pkg/config"
+	"github.com/gochin/framework/pkg/database"
 )
+
+const shutdownTimeout = 30 * time.Second
 
 // Server represents the HTTP server
 type Server struct {
@@ -26,67 +33,63 @@ func New(host string, port int) *Server {
 	}
 }
 
-// Start starts the HTTP server with graceful shutdown
+// Start builds the router and serves until interrupted.
 func (s *Server) Start() error {
-	// Create a simple mux router
-	mux := http.NewServeMux()
-	
-	// Add some basic routes
-	mux.HandleFunc("/", s.handleHome)
-	mux.HandleFunc("/health", s.handleHealth)
-	
-	// Create the server
+	cfg, err := config.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load configuration: %w", err)
+	}
+
+	handler, err := BuildRouter(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to build router: %w", err)
+	}
+
+	// Cancelled on shutdown so in-flight database queries are cancelled too.
+	baseCtx, cancelBase := context.WithCancel(context.Background())
+	defer cancelBase()
+
 	s.httpServer = &http.Server{
 		Addr:    fmt.Sprintf("%s:%d", s.host, s.port),
-		Handler: mux,
+		Handler: handler,
+
+		// Without ReadHeaderTimeout a client can hold a connection and a
+		// goroutine open forever by never finishing its headers (Slowloris).
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		// A hard backstop above the middleware timeout, which can still
+		// render a clean 504.
+		WriteTimeout:   30 * time.Second,
+		IdleTimeout:    120 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+		ErrorLog:       slog.NewLogLogger(slog.Default().Handler(), slog.LevelError),
+		BaseContext:    func(net.Listener) context.Context { return baseCtx },
 	}
-	
-	// Channel to listen for interrupt signal
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-	
-	// Start server in a goroutine
+
 	go func() {
 		fmt.Printf("🚀 Server starting on http://%s:%d\n", s.host, s.port)
 		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed to start: %v", err)
 		}
 	}()
-	
-	// Wait for interrupt signal
+
 	<-stop
 	fmt.Println("\n🛑 Shutting down server...")
-	
-	// Graceful shutdown with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-	
+
 	if err := s.httpServer.Shutdown(ctx); err != nil {
+		cancelBase()
 		return fmt.Errorf("server forced to shutdown: %w", err)
 	}
-	
+
+	cancelBase()
+	database.CloseConnection()
+
 	fmt.Println("✅ Server stopped gracefully")
 	return nil
-}
-
-// handleHome handles the home route
-func (s *Server) handleHome(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	
-	// Get the content of index.html - this checks for modifications
-	htmlContent, err := GetHTMLContent("index.html")
-	if err != nil {
-		http.Error(w, "Template not found", http.StatusInternalServerError)
-		log.Printf("Error loading index.html: %v", err)
-		return
-	}
-	
-	_, _ = w.Write(htmlContent)
-}
-
-// handleHealth handles the health check route
-func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, `{"status": "healthy", "timestamp": "%s"}`, time.Now().UTC().Format(time.RFC3339))
 }

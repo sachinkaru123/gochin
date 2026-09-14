@@ -48,26 +48,29 @@ func (db *DatabaseConfig) GetConnectionString() string {
 // Connect establishes a database connection
 func (db *DatabaseConfig) Connect() (*sql.DB, error) {
 	connStr := db.GetConnectionString()
-	
-	log.Printf("Connecting to database: host=%s port=%d dbname=%s user=%s", 
+
+	log.Printf("Connecting to database: host=%s port=%d dbname=%s user=%s",
 		db.Host, db.Port, db.Name, db.User)
-	
+
 	connection, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
-	
+
 	// Configure connection pool
 	connection.SetMaxOpenConns(db.MaxOpenConns)
 	connection.SetMaxIdleConns(db.MaxIdleConns)
 	connection.SetConnMaxLifetime(time.Duration(db.MaxLifetime) * time.Minute)
-	
+	// Without an idle timeout, idle connections are only reclaimed at
+	// ConnMaxLifetime, holding Postgres backends open far longer than needed.
+	connection.SetConnMaxIdleTime(5 * time.Minute)
+
 	// Test the connection
 	if err := connection.Ping(); err != nil {
 		connection.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-	
+
 	log.Println("✅ Database connection established successfully")
 	return connection, nil
 }
@@ -79,14 +82,14 @@ func (db *DatabaseConfig) TestConnection() error {
 		return err
 	}
 	defer conn.Close()
-	
+
 	// Test with a simple query
 	var version string
 	err = conn.QueryRow("SELECT version()").Scan(&version)
 	if err != nil {
 		return fmt.Errorf("failed to query database version: %w", err)
 	}
-	
+
 	log.Printf("Database version: %s", version)
 	return nil
 }

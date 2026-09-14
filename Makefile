@@ -86,7 +86,7 @@ dev:
 		echo "Starting development server with hot reload..."; \
 		air; \
 	else \
-		echo "Air not installed. Install with: go install github.com/cosmtrek/air@latest"; \
+		echo "Air not installed. Install with: go install github.com/air-verse/air@latest"; \
 		echo "Falling back to regular build..."; \
 		make build; \
 	fi
@@ -101,7 +101,7 @@ init:
 	fi
 	@if ! command -v air > /dev/null; then \
 		echo "Installing air for hot reload..."; \
-		go install github.com/cosmtrek/air@latest; \
+		go install github.com/air-verse/air@latest; \
 	fi
 	@echo "✅ Development environment ready"
 
