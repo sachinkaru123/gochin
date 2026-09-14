@@ -1,0 +1,65 @@
+// Package seeders populates the database with development data.
+//
+// Every file here registers itself from init(), so the server and CLI pick up
+// new seeders without any central list to edit.
+package seeders
+
+import (
+	"context"
+	"errors"
+
+	models "{{.Module}}/app/Models"
+	"github.com/sachinkaru123/gochin/pkg/auth"
+	"github.com/sachinkaru123/gochin/pkg/logs"
+	"github.com/sachinkaru123/gochin/pkg/orm"
+)
+
+// DevPassword is the password given to every seeded account. It is only ever
+// used against a development database.
+const DevPassword = "password123456"
+
+func init() {
+	orm.RegisterSeeder(orm.Seeder{
+		Name:     "users",
+		Priority: 10,
+		Run:      seedUsers,
+	})
+}
+
+func seedUsers(ctx context.Context) error {
+	accounts := []struct{ Name, Email string }{
+		{"Ada Lovelace", "ada@gochin.test"},
+		{"Grace Hopper", "grace@gochin.test"},
+		{"Alan Turing", "alan@gochin.test"},
+	}
+
+	for _, a := range accounts {
+		// Re-running must not fail or duplicate, since nothing tracks which
+		// seeders have already run.
+		existing, err := orm.Query[models.User]().
+			WithContext(ctx).
+			Where("email", "=", a.Email).
+			First()
+		if err != nil && !errors.Is(err, orm.ErrRecordNotFound) {
+			return err
+		}
+		if existing != nil {
+			continue
+		}
+
+		// Seed a real argon2 hash: an empty or plaintext password would
+		// create an account that either cannot log in or is unsafe.
+		hash, err := auth.Hash(DevPassword)
+		if err != nil {
+			return err
+		}
+
+		user := &models.User{Name: a.Name, Email: a.Email, PasswordHash: hash}
+		if err := orm.CreateCtx(ctx, user); err != nil {
+			return err
+		}
+		logs.Info("seeded user", "email", user.Email)
+	}
+
+	return nil
+}

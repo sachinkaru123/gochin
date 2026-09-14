@@ -1,0 +1,93 @@
+package controllers
+
+import (
+	"net/http"
+
+	models "{{.Module}}/app/Models"
+	requests "{{.Module}}/app/Requests"
+	services "{{.Module}}/app/Services"
+	"github.com/sachinkaru123/gochin/pkg/auth"
+	"github.com/sachinkaru123/gochin/pkg/router"
+)
+
+type AuthController struct {
+	auth  *services.AuthService
+	guard *auth.Guard[models.User]
+}
+
+func NewAuthController(svc *services.AuthService, guard *auth.Guard[models.User]) *AuthController {
+	return &AuthController{auth: svc, guard: guard}
+}
+
+// tokenResponse is the shape returned whenever a token is issued. The token
+// appears here and nowhere else — it is never stored or logged.
+type tokenResponse struct {
+	User  *models.User `json:"user"`
+	Token string       `json:"token"`
+	Type  string       `json:"token_type"`
+}
+
+// Register creates an account and returns its first token.
+func (c *AuthController) Register(ctx *router.Context) error {
+	var req requests.RegisterRequest
+	if err := ctx.Bind(&req); err != nil {
+		return err
+	}
+
+	user, token, err := c.auth.Register(ctx.Ctx(), req)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusCreated, tokenResponse{User: user, Token: token, Type: "Bearer"})
+}
+
+// Login exchanges credentials for a token.
+func (c *AuthController) Login(ctx *router.Context) error {
+	var req requests.LoginRequest
+	if err := ctx.Bind(&req); err != nil {
+		return err
+	}
+
+	user, token, err := c.auth.Login(ctx.Ctx(), req)
+	if err != nil {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, tokenResponse{User: user, Token: token, Type: "Bearer"})
+}
+
+// Me returns the authenticated user.
+func (c *AuthController) Me(ctx *router.Context) error {
+	user, err := c.guard.MustUser(ctx)
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, user)
+}
+
+// Logout revokes the token used to make this request.
+func (c *AuthController) Logout(ctx *router.Context) error {
+	principal, ok := c.guard.Principal(ctx)
+	if !ok {
+		return router.Unauthorizedf("authentication required").WithCode("unauthenticated")
+	}
+
+	if err := c.auth.Logout(ctx.Ctx(), principal.TokenID); err != nil {
+		return err
+	}
+	return ctx.NoContent(http.StatusNoContent)
+}
+
+// LogoutAll revokes every token the authenticated user holds.
+func (c *AuthController) LogoutAll(ctx *router.Context) error {
+	user, err := c.guard.MustUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := c.auth.RevokeAllForUser(ctx.Ctx(), user.ID); err != nil {
+		return err
+	}
+	return ctx.NoContent(http.StatusNoContent)
+}

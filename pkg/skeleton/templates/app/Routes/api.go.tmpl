@@ -1,0 +1,45 @@
+// Package routes declares the application's HTTP routes.
+//
+// Every file in this package registers itself from init(), so adding a new
+// route file requires no change anywhere else — main.go blank-imports this
+// package once and picks all of them up.
+package routes
+
+import (
+	controllers "{{.Module}}/app/Controllers"
+	middleware "{{.Module}}/app/Middleware"
+	services "{{.Module}}/app/Services"
+	"github.com/sachinkaru123/gochin/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/router"
+	mw "github.com/sachinkaru123/gochin/pkg/router/middleware"
+)
+
+func init() {
+	router.Register(func(r *router.Router) {
+		// Composition root: controllers get their dependencies explicitly,
+		// which is what keeps them testable without a container.
+		guard := services.MustAuthGuard()
+		authCtrl := controllers.NewAuthController(services.NewAuthService(), guard)
+
+		// Full prefix is GOCHIN_API_PREFIX + /v1, e.g. /api/v1
+		v1 := r.Group("/v1")
+
+		// Credential endpoints carry their own tight per-IP budget: the
+		// global limiter is disabled by default, so without this there is no
+		// brute-force protection at all.
+		loginLimit := mw.RateLimit(mw.RateLimitConfig{
+			RequestsPerMinute: config.Get().Auth.LoginRatePerMinute,
+			Burst:             config.Get().Auth.LoginRatePerMinute,
+		})
+
+		auth := v1.Group("/auth")
+		auth.Post("/register", authCtrl.Register, loginLimit)
+		auth.Post("/login", authCtrl.Login, loginLimit)
+		auth.Get("/me", authCtrl.Me, middleware.Auth())
+		auth.Post("/logout", authCtrl.Logout, middleware.Auth())
+		auth.Post("/logout-all", authCtrl.LogoutAll, middleware.Auth())
+
+		// Add your own routes here, or in a new file in this package —
+		// see `gochin make controller`, `gochin make service`.
+	})
+}

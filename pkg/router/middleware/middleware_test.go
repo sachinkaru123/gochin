@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gochin/framework/pkg/router"
-	mw "github.com/gochin/framework/pkg/router/middleware"
+	"github.com/sachinkaru123/gochin/pkg/router"
+	mw "github.com/sachinkaru123/gochin/pkg/router/middleware"
 )
 
 func serve(t *testing.T, build func(*router.Router)) *router.Router {

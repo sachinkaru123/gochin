@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gochin/framework/internal/cli"
+	"github.com/sachinkaru123/gochin/pkg/cli"
 )
 
 func main() {

@@ -1,0 +1,22 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/sachinkaru123/gochin/pkg/cli"
+
+	// Blank imports trigger each package's init(), which is how it
+	// self-registers with the framework — see the comment at the top of
+	// app/Routes/api.go for the pattern.
+	_ "{{.Module}}/app/Migrations"
+	_ "{{.Module}}/app/Routes"
+	_ "{{.Module}}/app/Seeders"
+)
+
+func main() {
+	if err := cli.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+}

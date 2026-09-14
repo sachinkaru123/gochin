@@ -1,4 +1,4 @@
-module github.com/gochin/framework
+module github.com/sachinkaru123/gochin
 
 go 1.25.0
 

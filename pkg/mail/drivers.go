@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gochin/framework/pkg/logs"
+	"github.com/sachinkaru123/gochin/pkg/logs"
 )
 
 // LogMailer writes messages to the log instead of sending them.

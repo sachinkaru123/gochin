@@ -5,7 +5,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/gochin/framework/pkg/config"
+	"github.com/sachinkaru123/gochin/pkg/config"
 )
 
 var (

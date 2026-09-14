@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 // LoggerConfig tunes request logging.

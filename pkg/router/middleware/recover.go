@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/gochin/framework/pkg/router"
+	"github.com/sachinkaru123/gochin/pkg/router"
 )
 
 // Recover converts a panic into a normal 500 error return.
