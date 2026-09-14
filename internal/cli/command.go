@@ -6,10 +6,10 @@ import "github.com/spf13/cobra"
 type Command interface {
 	// GetCobraCommand returns the cobra command instance
 	GetCobraCommand() *cobra.Command
-	
+
 	// Execute runs the command with the given arguments
 	Execute(args []string) error
-	
+
 	// Validate validates the command arguments and flags
 	Validate() error
 }
@@ -26,7 +26,7 @@ func NewBaseCommand(use, short, long string) *BaseCommand {
 		Short: short,
 		Long:  long,
 	}
-	
+
 	return &BaseCommand{
 		cmd: cmd,
 	}

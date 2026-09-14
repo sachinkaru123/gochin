@@ -15,3 +15,5 @@ make build
 
 # Test configuration
 go run config/main.go
+
+sudo cp gochin /usr/local/bin/gochin

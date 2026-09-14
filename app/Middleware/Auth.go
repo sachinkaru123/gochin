@@ -1,0 +1,29 @@
+// Package middleware holds application-specific middleware.
+//
+// Framework middleware lives in pkg/router/middleware and is conventionally
+// imported as `mw` to avoid a name clash with this package.
+package middleware
+
+import (
+	services "github.com/gochin/framework/app/Services"
+	"github.com/gochin/framework/pkg/router"
+)
+
+// Auth requires a valid bearer token.
+//
+// The authenticated user is then available as services.MustAuthGuard().User(c)
+// in a controller, or .UserFromContext(ctx) inside a service.
+func Auth() router.Middleware {
+	return services.MustAuthGuard().Required()
+}
+
+// OptionalAuth populates the user when a token is present, but still rejects
+// a token that was presented and failed.
+func OptionalAuth() router.Middleware {
+	return services.MustAuthGuard().Optional()
+}
+
+// Can requires the token to carry every listed ability.
+func Can(abilities ...string) router.Middleware {
+	return services.MustAuthGuard().Can(abilities...)
+}

@@ -15,10 +15,21 @@ build:
 	CGO_ENABLED=0 go build -o $(BINARY_NAME) $(CMD_DIR)
 	@echo "✅ Build complete: ./$(BINARY_NAME)"
 
-## Build and install globally
-install: build
+## Build the smart installer
+build-installer:
+	@echo "Building smart installer..."
+	CGO_ENABLED=0 go build -o installer/gochin-installer installer/main.go
+	@echo "✅ Installer build complete: installer/gochin-installer"
+
+## Smart install - auto-detects OS and installs appropriately
+install:
+	@echo "Running smart installer (auto-detects OS)..."
+	go run installer/main.go
+
+## Manual install for current platform (Linux/macOS only)
+install-manual: build
 	@echo "Installing Gochin CLI globally..."
-	sudo mv $(BINARY_NAME) /usr/local/bin/
+	sudo cp $(BINARY_NAME) /usr/local/bin/
 	@echo "✅ Gochin installed globally"
 
 ## Run tests
@@ -47,22 +58,27 @@ clean:
 	rm -f $(BINARY_NAME)
 	@echo "✅ Clean complete"
 
-## Test CLI commands
-test-cli: build
+## Test CLI commands (uses global installation)
+test-cli:
 	@echo "Testing CLI commands..."
 	@echo "\n=== Testing help ==="
-	./$(BINARY_NAME) --help
+	gochin --help
 	@echo "\n=== Testing run start ==="
-	./$(BINARY_NAME) run start --help
+	gochin run start --help
 	@echo "\n=== Testing make controller ==="
-	./$(BINARY_NAME) make controller --help
+	gochin make controller --help
 	@echo "\n=== Testing db migrate ==="
-	./$(BINARY_NAME) db migrate --help
+	gochin db migrate --help
 
 ## Test configuration system
 test-config:
 	@echo "Testing configuration system..."
 	go run $(CONFIG_DIR)/main.go
+
+## Demo OS detection capabilities
+demo-os:
+	@echo "Running OS detection demo..."
+	go run demo/os-detection.go
 
 ## Development build with hot reload (requires air)
 dev:
@@ -70,7 +86,7 @@ dev:
 		echo "Starting development server with hot reload..."; \
 		air; \
 	else \
-		echo "Air not installed. Install with: go install github.com/cosmtrek/air@latest"; \
+		echo "Air not installed. Install with: go install github.com/air-verse/air@latest"; \
 		echo "Falling back to regular build..."; \
 		make build; \
 	fi
@@ -85,9 +101,23 @@ init:
 	fi
 	@if ! command -v air > /dev/null; then \
 		echo "Installing air for hot reload..."; \
-		go install github.com/cosmtrek/air@latest; \
+		go install github.com/air-verse/air@latest; \
 	fi
 	@echo "✅ Development environment ready"
+
+## Build for multiple platforms
+build-all:
+	@echo "Building Gochin for multiple platforms..."
+	@mkdir -p dist
+	@echo "Building for Linux (amd64)..."
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o dist/gochin-linux-amd64 $(CMD_DIR)
+	@echo "Building for macOS (amd64)..."
+	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -o dist/gochin-darwin-amd64 $(CMD_DIR)
+	@echo "Building for macOS (arm64)..."
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -o dist/gochin-darwin-arm64 $(CMD_DIR)
+	@echo "Building for Windows (amd64)..."
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o dist/gochin-windows-amd64.exe $(CMD_DIR)
+	@echo "✅ All builds complete in dist/ directory"
 
 ## Show available commands
 help:
@@ -99,8 +129,23 @@ help:
 .PHONY: build install test fmt lint tidy clean test-cli test-config dev init help
 
 
-##Freamwork Commands
+## Framework Commands
 
+## Start the Gochin server
 start:
 	@echo "Starting Gochin application..."
-	./$(BINARY_NAME) run start
+	gochin run start
+
+## Generate a controller
+controller:
+	@if [ -z "$(name)" ]; then \
+		echo "Usage: make controller name=ControllerName"; \
+		echo "Example: make controller name=User"; \
+	else \
+		gochin make controller $(name); \
+	fi
+
+## Run database migrations
+migrate:
+	@echo "Running database migrations..."
+	gochin db migrate
